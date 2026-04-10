@@ -9,8 +9,22 @@ import { markNudgeSent } from "../memory/nudges";
 import type { IMessageTransport } from "../transport/imessage";
 import { getDueNudges, type NudgeKind } from "../scheduler/due";
 import { dateKeyInTimezone, getZonedParts } from "../time";
+import { inferMessageIntent, type IntentToolName } from "./intent";
 import { createCoachTools } from "./tools";
 import { systemPrompt } from "./prompts";
+
+type ChatToolName =
+  | "get_context"
+  | "calendar_get_upcoming"
+  | "get_barcode_macros"
+  | "lookup_food"
+  | "log_meal"
+  | "log_workout"
+  | "set_goal"
+  | "set_training_schedule"
+  | "log_checkin"
+  | "remember_fact"
+  | "send_message";
 
 interface AgentInput {
   db: Database;
@@ -26,32 +40,50 @@ export async function runChatAgent(
 ): Promise<{ sent: boolean; usageText: string }> {
   console.log(`[agent:chat] start text=${userText.slice(0, 120)}`);
   const openrouter = createOpenRouter({ apiKey: input.config.openrouter_api_key });
-  const sentMessages: string[] = [];
-  const tools = createCoachTools({ ...input, sentMessages, maxSends: 1 });
+  const intent = await inferMessageIntent(input.config, userText, imagePath);
+  console.log(
+    `[agent:intent] allowMealLog=${String(intent.allowMealLog)} allowWorkoutLog=${String(intent.allowWorkoutLog)} suggested=${intent.suggestedTools.join(",") || "none"} reason=${intent.reason}`
+  );
 
-  const userContent = imagePath
-    ? `${userText}\n\n[user attached an image at ${imagePath}]`
-    : userText;
+  const activeTools = buildActiveTools(intent.suggestedTools, intent.allowMealLog, intent.allowWorkoutLog, imagePath);
+  console.log(`[agent:chat] active_tools=${activeTools.join(",")}`);
+  const systemWithIntent = [
+    systemPrompt,
+    "Route tool usage from inferred intent and keep tool calls minimal.",
+    `intent_reason: ${intent.reason}`,
+    `allow_meal_log: ${String(intent.allowMealLog)}`,
+    `allow_workout_log: ${String(intent.allowWorkoutLog)}`,
+    `suggested_tools: ${activeTools.join(",")}`,
+    "First call get_context when needed. Use tools only when they match intent."
+  ].join("\n\n");
+
+  const sentMessages: string[] = [];
+  const tools = createCoachTools({
+    ...input,
+    sentMessages,
+    maxSends: 1,
+    currentImagePath: imagePath,
+    allowMealLog: intent.allowMealLog,
+    allowWorkoutLog: intent.allowWorkoutLog
+  });
+
+  const userContent = imagePath ? `${userText}\n\n[user attached an image at ${imagePath}]` : userText;
+
+  const messageContent: Array<{ type: "text"; text: string } | { type: "image"; image: Uint8Array }> = [
+    { type: "text", text: userContent }
+  ];
+
+  if (imagePath) {
+    const bytes = await Bun.file(imagePath).bytes().catch(() => null);
+    if (bytes) messageContent.push({ type: "image", image: bytes });
+  }
 
   const result = await generateText({
-    model: openrouter.chat(input.config.model),
-    system:
-      `${systemPrompt}\n\n` +
-      "First call get_context. Use tools when you need to save/update data. You may answer directly in text or call send_message.",
-    prompt: userContent,
+    model: openrouter.chat(imagePath ? input.config.vision_model : input.config.model),
+    system: systemWithIntent,
+    messages: [{ role: "user", content: messageContent }],
     tools,
-    activeTools: [
-      "get_context",
-      "calendar_get_upcoming",
-      "lookup_food",
-      "log_meal",
-      "log_workout",
-      "set_goal",
-      "set_training_schedule",
-      "log_checkin",
-      "remember_fact",
-      "send_message"
-    ],
+    activeTools,
     toolChoice: "auto",
     stopWhen: stepCountIs(8)
   });
@@ -84,18 +116,25 @@ export async function runChatAgent(
 
   if (sentMessages.length === 0) {
     console.log("[agent:chat] no outbound tool message; retrying with forced send_message");
-    const recoveryTools = createCoachTools({ ...input, sentMessages, maxSends: 1 });
+    const recoveryTools = createCoachTools({
+      ...input,
+      sentMessages,
+      maxSends: 1,
+      currentImagePath: imagePath,
+      allowMealLog: intent.allowMealLog,
+      allowWorkoutLog: intent.allowWorkoutLog
+    });
     const recovery = await generateText({
-      model: openrouter.chat(input.config.model),
+      model: openrouter.chat(imagePath ? input.config.vision_model : input.config.model),
       system: [
         systemPrompt,
         "Recovery mode: the previous run did not send a user message.",
         "Call get_context, then call send_message exactly once.",
         "Do not leave the user without a concrete response."
       ].join("\n\n"),
-      prompt: userContent,
+      messages: [{ role: "user", content: messageContent }],
       tools: recoveryTools,
-      activeTools: ["get_context", "send_message", "remember_fact"],
+      activeTools: uniqueTools(["get_context", "get_barcode_macros", "lookup_food", "send_message", "remember_fact"]),
       toolChoice: "required",
       stopWhen: stepCountIs(4)
     });
@@ -135,6 +174,32 @@ function preview(text: string): string {
   const compact = text.trim().replace(/\s+/g, " ");
   if (!compact) return "<empty>";
   return compact.length > 140 ? `${compact.slice(0, 140)}...` : compact;
+}
+
+function buildActiveTools(
+  suggested: IntentToolName[],
+  allowMealLog: boolean,
+  allowWorkoutLog: boolean,
+  imagePath?: string
+
+): ChatToolName[] {
+  const baseline: ChatToolName[] = ["get_context", "remember_fact", "send_message"];
+  const imageDefaults: ChatToolName[] = imagePath ? ["get_barcode_macros", "lookup_food"] : [];
+
+  const selected = uniqueTools([...baseline, ...imageDefaults, ...suggested]);
+  if (!allowMealLog) {
+    return (!allowWorkoutLog
+      ? selected.filter((toolName) => toolName !== "log_meal" && toolName !== "log_workout")
+      : selected.filter((toolName) => toolName !== "log_meal"));
+  }
+  if (!allowWorkoutLog) {
+    return selected.filter((toolName) => toolName !== "log_workout");
+  }
+  return selected;
+}
+
+function uniqueTools(items: ChatToolName[]): ChatToolName[] {
+  return Array.from(new Set(items));
 }
 
 export async function runSchedulerAgent(input: AgentInput): Promise<void> {

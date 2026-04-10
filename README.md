@@ -13,6 +13,12 @@ bun run src/index.ts init
 
 Nutrition lookup uses Nutritionix when you set `nutritionix_app_id` and `nutritionix_app_key` in config, then falls back to Open Food Facts and local defaults.
 
+For packaged foods in images, the agent can extract a barcode from the photo and resolve macros through Open Food Facts barcode lookup, then fallback to food-name lookup.
+
+Meal analysis does not auto-log by default; the model only saves a meal when message intent is clearly an explicit logging request.
+
+Tool logs include citation metadata (provider + query/endpoint) so each food macro result can be traced to its source.
+
 ## run
 
 ```bash

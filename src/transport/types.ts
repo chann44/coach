@@ -1,3 +1,9 @@
+export interface IncomingAttachment {
+  path: string;
+  mimeType?: string;
+  filename?: string;
+}
+
 export interface IncomingMessage {
   id: string;
   guid?: string;
@@ -5,5 +11,6 @@ export interface IncomingMessage {
   from: string;
   text: string;
   imagePath?: string;
+  attachments?: IncomingAttachment[];
   timestamp: number;
 }

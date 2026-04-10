@@ -15,7 +15,20 @@ interface NutritionixResponse {
 export async function fetchNutritionixFood(
   input: LookupFoodInput,
   config: CoachConfig
-): Promise<{ calories: number; protein_g: number; carbs_g: number; fat_g: number } | null> {
+): Promise<
+  | {
+      calories: number;
+      protein_g: number;
+      carbs_g: number;
+      fat_g: number;
+      citation: {
+        provider: "nutritionix";
+        endpoint: string;
+        query: string;
+      };
+    }
+  | null
+> {
   if (!config.nutritionix_app_id || !config.nutritionix_app_key) {
     return null;
   }
@@ -45,7 +58,17 @@ export async function fetchNutritionixFood(
   const fat = safe(first.nf_total_fat);
 
   if (calories <= 0 && protein <= 0 && carbs <= 0 && fat <= 0) return null;
-  return { calories, protein_g: protein, carbs_g: carbs, fat_g: fat };
+  return {
+    calories,
+    protein_g: protein,
+    carbs_g: carbs,
+    fat_g: fat,
+    citation: {
+      provider: "nutritionix",
+      endpoint: "https://trackapi.nutritionix.com/v2/natural/nutrients",
+      query: text
+    }
+  };
 }
 
 function safe(value: number | undefined): number {

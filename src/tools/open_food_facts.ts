@@ -15,7 +15,20 @@ interface OpenFoodFactsSearchResponse {
 
 export async function fetchOpenFoodFactsFood(
   input: LookupFoodInput
-): Promise<{ calories: number; protein_g: number; carbs_g: number; fat_g: number } | null> {
+): Promise<
+  | {
+      calories: number;
+      protein_g: number;
+      carbs_g: number;
+      fat_g: number;
+      citation: {
+        provider: "open_food_facts_search";
+        endpoint: string;
+        search_terms: string;
+      };
+    }
+  | null
+> {
   const query = [input.brand, input.query].filter(Boolean).join(" ").trim();
   if (!query) return null;
 
@@ -41,7 +54,17 @@ export async function fetchOpenFoodFactsFood(
   const fat = safe(product.nutriments.fat_100g);
 
   if (calories <= 0 && protein <= 0 && carbs <= 0 && fat <= 0) return null;
-  return { calories, protein_g: protein, carbs_g: carbs, fat_g: fat };
+  return {
+    calories,
+    protein_g: protein,
+    carbs_g: carbs,
+    fat_g: fat,
+    citation: {
+      provider: "open_food_facts_search",
+      endpoint: "https://world.openfoodfacts.org/cgi/search.pl",
+      search_terms: query
+    }
+  };
 }
 
 function safe(value: number | undefined): number {
