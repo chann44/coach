@@ -35,9 +35,17 @@ export async function buildContext(db: Database, config: CoachConfig, now = new 
   const totals = mealTotalsBetween(db, startTs, endTs);
   const workoutSummary = workoutsBetween(db, startTs, endTs);
   const prs = recentPrs(db, 3);
-  const facts = listFacts(db).slice(0, 10);
+  const facts = listFacts(db)
+    .filter((fact) => !fact.key.startsWith("startup_"))
+    .slice(0, 10);
+  const factsMap = new Map(facts.map((fact) => [fact.key, fact.value]));
   const recent = recentConversations(db, 5).reverse();
   const events = config.integrations.calendar.enabled ? await getUpcomingEvents(8) : [];
+
+  const effectiveGoal = factsMap.get("goal") ?? user?.goal ?? "unknown";
+  const trainingSchedule = factsMap.get("training_days_per_week")
+    ? `${factsMap.get("training_days_per_week")} days/week${factsMap.get("training_preferred_time") ? `, ${factsMap.get("training_preferred_time")}` : ""}`
+    : "not set";
 
   const targets = user
     ? `${user.daily_calorie_target} cal, ${Math.round(user.daily_protein_target)}g protein`
@@ -50,7 +58,8 @@ export async function buildContext(db: Database, config: CoachConfig, now = new 
   return [
     "## User",
     profileLine,
-    `Goal: ${user?.goal ?? "unknown"}. Targets: ${targets}.`,
+    `Goal: ${effectiveGoal}. Targets: ${targets}.`,
+    `Training schedule: ${trainingSchedule}.`,
     `Timezone: ${config.timezone}. Current time: ${formatLocalDateTime(now, config.timezone)}.`,
     "",
     "## Today so far",

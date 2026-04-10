@@ -146,6 +146,70 @@ export function createCoachTools(runtime: ToolRuntime) {
       }
     }),
 
+    set_goal: tool({
+      description: "Set or update user's body-composition goal",
+      inputSchema: z.object({
+        goal: z.enum(["cut", "maintain", "bulk"]),
+        timeframe_weeks: z.number().int().min(1).max(52).optional(),
+        notes: z.string().max(200).optional()
+      }),
+      execute: async ({ goal, timeframe_weeks, notes }) => {
+        runtime.db.query("UPDATE user SET goal = ?1, updated_at = ?2 WHERE id = 1").run(goal, Date.now());
+
+        upsertFact(runtime.db, { key: "goal", value: goal });
+        if (typeof timeframe_weeks === "number") {
+          upsertFact(runtime.db, { key: "goal_timeframe_weeks", value: String(timeframe_weeks) });
+        }
+        if (notes && notes.trim().length > 0) {
+          upsertFact(runtime.db, { key: "goal_notes", value: notes.trim() });
+        }
+
+        return { ok: true, goal, timeframe_weeks: timeframe_weeks ?? null };
+      }
+    }),
+
+    set_training_schedule: tool({
+      description: "Set user's weekly training schedule",
+      inputSchema: z.object({
+        days_per_week: z.number().int().min(1).max(7),
+        preferred_time: z.string().min(2).max(40).optional(),
+        split: z.string().max(120).optional()
+      }),
+      execute: async ({ days_per_week, preferred_time, split }) => {
+        runtime.db
+          .query("UPDATE user SET training_days_per_week = ?1, updated_at = ?2 WHERE id = 1")
+          .run(days_per_week, Date.now());
+
+        upsertFact(runtime.db, { key: "training_days_per_week", value: String(days_per_week) });
+        if (preferred_time && preferred_time.trim().length > 0) {
+          upsertFact(runtime.db, { key: "training_preferred_time", value: preferred_time.trim() });
+        }
+        if (split && split.trim().length > 0) {
+          upsertFact(runtime.db, { key: "training_split", value: split.trim() });
+        }
+
+        return { ok: true, days_per_week, preferred_time: preferred_time ?? null, split: split ?? null };
+      }
+    }),
+
+    log_checkin: tool({
+      description: "Log daily wellbeing check-in",
+      inputSchema: z.object({
+        sleep_hours: z.number().min(0).max(24).optional(),
+        energy_1_10: z.number().int().min(1).max(10).optional(),
+        stress_1_10: z.number().int().min(1).max(10).optional(),
+        soreness_1_10: z.number().int().min(1).max(10).optional(),
+        notes: z.string().max(200).optional()
+      }),
+      execute: async (input) => {
+        upsertFact(runtime.db, {
+          key: "last_checkin",
+          value: JSON.stringify({ ...input, ts: runtime.now.getTime() })
+        });
+        return { ok: true };
+      }
+    }),
+
     send_message: tool({
       description: "Send final coach message to user",
       inputSchema: z.object({ text: z.string().min(1).max(500) }),

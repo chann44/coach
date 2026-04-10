@@ -3,10 +3,12 @@ import { generateText, stepCountIs } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { CoachConfig } from "../config";
 import { insertConversation } from "../memory/conversations";
+import { getFact, upsertFact } from "../memory/facts";
 import { recordOutboundEcho } from "../memory/message_dedupe";
 import { markNudgeSent } from "../memory/nudges";
 import type { IMessageTransport } from "../transport/imessage";
 import { getDueNudges, type NudgeKind } from "../scheduler/due";
+import { dateKeyInTimezone, getZonedParts } from "../time";
 import { createCoachTools } from "./tools";
 import { systemPrompt } from "./prompts";
 
@@ -35,7 +37,7 @@ export async function runChatAgent(
     model: openrouter.chat(input.config.model),
     system:
       `${systemPrompt}\n\n` +
-      "You must use tools for actions. First call get_context. Use that context in your final wording. When done, call send_message exactly once.",
+      "First call get_context. Use tools when you need to save/update data. You may answer directly in text or call send_message.",
     prompt: userContent,
     tools,
     activeTools: [
@@ -43,10 +45,13 @@ export async function runChatAgent(
       "calendar_get_upcoming",
       "log_meal",
       "log_workout",
+      "set_goal",
+      "set_training_schedule",
+      "log_checkin",
       "remember_fact",
       "send_message"
     ],
-    toolChoice: "required",
+    toolChoice: "auto",
     stopWhen: stepCountIs(8)
   });
 
@@ -167,35 +172,67 @@ export async function runSchedulerAgent(input: AgentInput): Promise<void> {
 function schedulerMessageFor(kind: NudgeKind): string {
   switch (kind) {
     case "morning":
-      return "morning check. log plan + first meal when done.";
+      return "morning check. whats todays training plan, target calories/protein, and first meal timing?";
     case "protein":
-      return "protein check. close the gap before bed.";
+      return "protein check. report current protein and calories so we can close the gap before bed.";
     case "winddown":
-      return "wind down. log final meal and sleep target.";
+      return "wind down. send final meal, steps, and target sleep time.";
     case "preworkout":
       return "gym in about an hour. fuel now and lock in.";
   }
 }
 
 export async function runStartupAgent(input: AgentInput): Promise<void> {
-  const openrouter = createOpenRouter({ apiKey: input.config.openrouter_api_key });
-  const sentMessages: string[] = [];
-  const tools = createCoachTools({ ...input, sentMessages, maxSends: 1 });
+  const nowTs = input.now.getTime();
+  const hasTrainingHistory = !!input.db.query("SELECT 1 FROM workouts LIMIT 1").get();
+  const parts = getZonedParts(input.now, input.config.timezone);
+  const greeting = greetingForHour(parts.hour);
+  const dateKey = dateKeyInTimezone(input.now, input.config.timezone);
+  const lastStartup = getFact(input.db, "startup_last_date")?.value;
 
-  await generateText({
-    model: openrouter.chat(input.config.model),
-    system: [
-      "You are Coach startup agent.",
-      "Send one short onboarding check-in message that asks exactly two questions.",
-      "Question 1 must ask for the user's most recent meal.",
-      "Question 2 must ask what time they plan to train today.",
-      "Keep it concise and coach-like.",
-      "Do not call any other tool."
-    ].join("\n"),
-    prompt: "send startup message now",
-    tools,
-    activeTools: ["send_message"],
-    toolChoice: "required",
-    stopWhen: stepCountIs(2)
+  const startMessage = hasTrainingHistory
+    ? `${greeting}. youre back in. what session are you hitting today, and are we pushing fat loss or size right now?`
+    : `${greeting}. i dont have training history yet. what days and time will you train this week, and is your goal fat loss or muscle gain?`;
+
+  const startSend = await input.transport.reply(input.config.imessage_handle, startMessage);
+  recordOutboundEcho(input.db, {
+    guid: startSend.message?.guid,
+    chatId: startSend.message?.chatId,
+    text: startMessage,
+    ts: nowTs
   });
+  insertConversation(input.db, {
+    ts: nowTs,
+    role: "coach",
+    content: startMessage,
+    hasImage: false,
+    model: input.config.model
+  });
+
+  if (lastStartup !== dateKey) {
+    const dailyCheck = hasTrainingHistory
+      ? "daily check. send sleep hours, energy 1-10, and what youve eaten so far."
+      : "daily check. send wake time, first meal plan, and your training window for today.";
+    const dailySend = await input.transport.reply(input.config.imessage_handle, dailyCheck);
+    recordOutboundEcho(input.db, {
+      guid: dailySend.message?.guid,
+      chatId: dailySend.message?.chatId,
+      text: dailyCheck,
+      ts: Date.now()
+    });
+    insertConversation(input.db, {
+      ts: Date.now(),
+      role: "coach",
+      content: dailyCheck,
+      hasImage: false,
+      model: input.config.model
+    });
+    upsertFact(input.db, { key: "startup_last_date", value: dateKey });
+  }
+}
+
+function greetingForHour(hour: number): string {
+  if (hour < 12) return "whats up good morning";
+  if (hour < 18) return "whats up good afternoon";
+  return "whats up good evening";
 }
