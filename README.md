@@ -1,34 +1,49 @@
 # coach
 
-local-first iMessage health coach. bun runtime only.
+Local-first iMessage health coach for macOS, built with Bun.
 
-## setup
+`coach` runs as a background agent, listens for messages from your configured iMessage handle, and responds with context-aware coaching using your OpenRouter model.
+
+## Highlights
+
+- Local-first by default: conversations, meals, workouts, facts, and nudges are stored in `~/.coach/coach.db`
+- No hosted backend: data stays on your machine
+- iMessage-native transport with dedupe and sender filtering
+- Calendar-aware scheduling (for pre-workout nudges and daily planning)
+- Built-in diagnostics via `coach doctor`
+
+## Requirements
+
+- macOS (uses iMessage + `launchd`)
+- Bun runtime
+- OpenRouter API key
+- Full Disk Access for Messages DB (`~/Library/Messages/chat.db`)
+- Calendar permission (optional but recommended)
+
+## Quick Start
 
 ```bash
 bun install
 bun run src/index.ts init
 ```
 
-`init` prompts for config, creates the sqlite db, runs migrations, and installs the launchd agent.
+During `init`, Coach will:
 
-Nutrition lookup uses Nutritionix when you set `nutritionix_app_id` and `nutritionix_app_key` in config, then falls back to Open Food Facts and local defaults.
+1. Prompt for your API key, iMessage handle, timezone, and model
+2. Create local config + SQLite data files under `~/.coach`
+3. Install a `launchd` agent for background execution
 
-For packaged foods in images, the agent can extract a barcode from the photo and resolve macros through Open Food Facts barcode lookup, then fallback to food-name lookup.
-
-Meal analysis does not auto-log by default; the model only saves a meal when message intent is clearly an explicit logging request.
-
-Tool logs include citation metadata (provider + query/endpoint) so each food macro result can be traced to its source.
-
-## run
+Then run Coach:
 
 ```bash
 bun run src/index.ts run
 ```
 
-## cli
+## CLI Commands
 
 ```bash
 coach init
+coach install
 coach run
 coach status
 coach doctor
@@ -36,20 +51,64 @@ coach stop
 coach uninstall
 ```
 
-## test
+- `init` / `install`: interactive setup and launchd installation
+- `run`: start the daemon in the current process
+- `status`: show daemon, launchd, config, and DB state
+- `doctor`: run environment and permission checks
+- `stop`: stop running daemon and unload launchd job
+- `uninstall`: remove launchd files and delete `~/.coach`
+
+## Configuration
+
+Config is stored at `~/.coach/config.json` with file permissions `0600`.
+
+Key fields:
+
+- `openrouter_api_key`
+- `imessage_handle`
+- `model` / `vision_model`
+- `timezone`
+- `schedule` (`morning_briefing`, `wind_down`, `protein_check`)
+- `integrations.calendar.enabled`
+
+Default model: `anthropic/claude-sonnet-4`
+
+## Privacy and Data Handling
+
+- Coach stores local state in SQLite only (`~/.coach/coach.db`)
+- Meal photos and message content can be sent to your configured model provider through OpenRouter
+- No Coach-managed cloud service or sync backend is required
+
+## Scheduling Notes
+
+- Day boundaries and dedupe keys use your configured timezone
+- Calendar reads are cached for 5 minutes
+- Pre-workout nudges look ahead 24 hours and trigger about 45-60 minutes before events
+
+## Development
+
+Install dependencies:
+
+```bash
+bun install
+```
+
+Run tests:
 
 ```bash
 bun test
 ```
 
-## privacy
+Run in development:
 
-- all logs, meals, workouts, and facts stay in local sqlite at `~/.coach/coach.db`
-- food photos and meal descriptions are sent only to your chosen llm provider via OpenRouter
-- there is no coach server
+```bash
+bun run src/index.ts run
+```
 
-## scheduling behavior
+## Project Status
 
-- day boundaries and dedupe keys use the user profile timezone
-- calendar reads are cached with a 5 minute ttl
-- pre-workout nudge checks next 24h events and sends 60-45 min before start
+This project is under active development. If you plan to open-source it broadly, consider adding:
+
+- `LICENSE`
+- `CONTRIBUTING.md`
+- issue and pull request templates
