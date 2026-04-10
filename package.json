@@ -1,0 +1,24 @@
+{
+  "name": "coach",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts run",
+    "build": "bun run build.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openrouter/ai-sdk-provider": "^2.5.1",
+    "@photon-ai/imessage-kit": "^2.1.2",
+    "ai": "^6.0.156",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
