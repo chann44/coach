@@ -20,50 +20,19 @@ export class IMessageTransport {
   }
 
   async start(onMessage: (message: IncomingMessage) => Promise<void>): Promise<void> {
+    const handleEvent = async (msg: any, channel: "message" | "direct") => {
+      await this.handleIncomingEvent(msg, channel, onMessage);
+    };
+
     await this.sdk.startWatching({
-      onDirectMessage: async (msg: any) => {
-        this.gcDedupeMaps();
-
-        if (msg.isFromMe || msg.isReaction) {
-          console.log("[transport] skipped incoming own/reaction message");
-          return;
-        }
-        if (msg.sender !== this.allowedHandle) {
-          console.log(`[transport] skipped incoming from unexpected sender=${String(msg.sender)}`);
-          return;
-        }
-
-        const id = String(msg.id ?? "");
-        const guid = String(msg.guid ?? "");
-        const text = String(msg.text ?? "").trim();
-
-        if (id && this.seenIncomingIds.has(id)) {
-          console.log(`[transport] skipped duplicate incoming id=${id}`);
-          return;
-        }
-        if (guid && this.recentSentGuids.has(guid)) {
-          console.log(`[transport] skipped outbound echo guid=${guid}`);
-          return;
-        }
-
-        if (id) this.seenIncomingIds.set(id, Date.now());
-
-        const normalized: IncomingMessage = {
-          id,
-          guid,
-          chatId: msg.chatId ? String(msg.chatId) : undefined,
-          from: String(msg.sender),
-          text,
-          imagePath: msg.attachments?.[0]?.path,
-          timestamp: this.normalizeTimestamp(msg.date)
-        };
-
-        console.log(
-          `[transport] incoming accepted id=${id || "-"} guid=${guid || "-"} chat=${normalized.chatId ?? normalized.from}`
-        );
-        await onMessage(normalized);
+      onMessage: async (msg: any) => handleEvent(msg, "message"),
+      onDirectMessage: async (msg: any) => handleEvent(msg, "direct"),
+      onError: (error: Error) => {
+        console.error("[transport] watcher error", error);
       }
     });
+
+    console.log("[transport] watcher started");
   }
 
   async reply(to: string, text: string): Promise<SendResult> {
@@ -108,5 +77,107 @@ export class IMessageTransport {
     if (ts < minValid || ts > maxValid) return Date.now();
 
     return ts;
+  }
+
+  private pickImagePath(attachments: Array<{ path: string; mimeType?: string; filename?: string }>): string | undefined {
+    const image = attachments.find((attachment) => {
+      const mime = attachment.mimeType?.toLowerCase() ?? "";
+      if (mime.startsWith("image/")) return true;
+      return /\.(png|jpe?g|gif|webp|heic|heif|avif)$/i.test(attachment.path);
+    });
+    return image?.path;
+  }
+
+  private async handleIncomingEvent(
+    msg: any,
+    channel: "message" | "direct",
+    onMessage: (message: IncomingMessage) => Promise<void>
+  ): Promise<void> {
+    this.gcDedupeMaps();
+
+    const attachments = Array.isArray(msg.attachments)
+      ? msg.attachments
+          .map((attachment: any) => ({
+            path: String(attachment?.path ?? ""),
+            mimeType: attachment?.mimeType ? String(attachment.mimeType) : undefined,
+            filename: attachment?.filename ? String(attachment.filename) : undefined
+          }))
+          .filter((attachment: { path: string }) => attachment.path.length > 0)
+      : [];
+
+    const sender = String(msg.sender ?? "");
+    const chatId = msg.chatId ? String(msg.chatId) : undefined;
+    const text = String(msg.text ?? "").trim();
+
+    console.log(
+      `[transport] incoming raw channel=${channel} sender=${sender || "-"} chat=${chatId ?? "-"} fromMe=${String(Boolean(msg.isFromMe))} reaction=${String(Boolean(msg.isReaction))} group=${String(Boolean(msg.isGroupChat))} textLen=${text.length} attachments=${attachments.length}`
+    );
+
+    if (msg.isFromMe || msg.isReaction) {
+      console.log("[transport] skipped incoming own/reaction message");
+      return;
+    }
+
+    if (!this.shouldAcceptInbound(sender, chatId)) {
+      console.log(
+        `[transport] skipped incoming sender=${sender || "-"} chat=${chatId ?? "-"}; expected=${this.allowedHandle}`
+      );
+      return;
+    }
+
+    const id = String(msg.id ?? "");
+    const guid = String(msg.guid ?? "");
+
+    if (id && this.seenIncomingIds.has(id)) {
+      console.log(`[transport] skipped duplicate incoming id=${id}`);
+      return;
+    }
+    if (guid && this.recentSentGuids.has(guid)) {
+      console.log(`[transport] skipped outbound echo guid=${guid}`);
+      return;
+    }
+
+    if (id) this.seenIncomingIds.set(id, Date.now());
+
+    const normalized: IncomingMessage = {
+      id,
+      guid,
+      chatId,
+      from: sender,
+      text,
+      attachments: attachments.length > 0 ? attachments : undefined,
+      imagePath: this.pickImagePath(attachments),
+      timestamp: this.normalizeTimestamp(msg.date)
+    };
+
+    console.log(
+      `[transport] incoming accepted id=${id || "-"} guid=${guid || "-"} chat=${normalized.chatId ?? normalized.from}`
+    );
+    await onMessage(normalized);
+  }
+
+  private shouldAcceptInbound(sender: string, chatId?: string): boolean {
+    const expected = this.allowedHandle.trim();
+    if (!expected) return true;
+    if (this.matchesAllowedHandle(sender)) return true;
+    if (chatId && this.matchesAllowedHandle(chatId)) return true;
+    return false;
+  }
+
+  private matchesAllowedHandle(sender: string): boolean {
+    const expected = this.allowedHandle.trim();
+    const actual = sender.trim();
+    if (!expected || !actual) return false;
+
+    if (expected.toLowerCase() === actual.toLowerCase()) return true;
+
+    const expectedDigits = expected.replace(/\D+/g, "");
+    const actualDigits = actual.replace(/\D+/g, "");
+    if (expectedDigits.length >= 7 && actualDigits.length >= 7) {
+      if (expectedDigits === actualDigits) return true;
+      if (expectedDigits.endsWith(actualDigits) || actualDigits.endsWith(expectedDigits)) return true;
+    }
+
+    return false;
   }
 }

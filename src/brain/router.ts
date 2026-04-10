@@ -21,13 +21,15 @@ export async function handleIncomingMessage(
   }
 
   console.log(
-    `[incoming] processing key=${decision.key} chat=${message.chatId ?? message.from} text=${message.text.slice(0, 80)}`
+    `[incoming] processing key=${decision.key} chat=${message.chatId ?? message.from} textLen=${message.text.length} hasImage=${String(Boolean(message.imagePath))} attachments=${message.attachments?.length ?? 0}`
   );
+
+  const content = message.text.length > 0 ? message.text : message.imagePath ? "[image]" : "[empty]";
 
   insertConversation(db, {
     ts: message.timestamp,
     role: "user",
-    content: message.text,
+    content,
     hasImage: !!message.imagePath
   });
 
@@ -38,7 +40,7 @@ export async function handleIncomingMessage(
       transport,
       now: new Date(message.timestamp)
     },
-    message.text,
+    content,
     message.imagePath
   );
 
