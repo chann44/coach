@@ -8,6 +8,8 @@ export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "ver
 export interface CoachConfig {
   version: number;
   openrouter_api_key: string;
+  nutritionix_app_id?: string;
+  nutritionix_app_key?: string;
   imessage_handle: string;
   model: string;
   vision_model: string;
@@ -25,6 +27,8 @@ export interface CoachConfig {
 export const defaultConfig: CoachConfig = {
   version: 1,
   openrouter_api_key: "",
+  nutritionix_app_id: "",
+  nutritionix_app_key: "",
   imessage_handle: "",
   model: "anthropic/claude-sonnet-4",
   vision_model: "anthropic/claude-sonnet-4",

@@ -11,6 +11,7 @@ import { markNudgeSent } from "../memory/nudges";
 import { insertWorkoutSet } from "../memory/workouts";
 import type { IMessageTransport } from "../transport/imessage";
 import { dayRangeInTimezone } from "../time";
+import { lookupFood } from "../tools/lookup_food";
 import { buildContext } from "./context";
 import { getDueNudges, type NudgeKind } from "../scheduler/due";
 
@@ -50,6 +51,20 @@ export function createCoachTools(runtime: ToolRuntime) {
             endsAt: event.endsAt
           }))
         };
+      }
+    }),
+
+    lookup_food: tool({
+      description:
+        "Look up food macros from Nutritionix first, then Open Food Facts, then local defaults and estimates",
+      inputSchema: z.object({
+        query: z.string().min(1),
+        brand: z.string().min(1).optional(),
+        portion: z.string().min(1).optional()
+      }),
+      execute: async ({ query, brand, portion }) => {
+        const result = await lookupFood({ query, brand, portion }, runtime.config);
+        return result;
       }
     }),
 

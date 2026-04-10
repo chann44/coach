@@ -11,6 +11,8 @@ bun run src/index.ts init
 
 `init` prompts for config, creates the sqlite db, runs migrations, and installs the launchd agent.
 
+Nutrition lookup uses Nutritionix when you set `nutritionix_app_id` and `nutritionix_app_key` in config, then falls back to Open Food Facts and local defaults.
+
 ## run
 
 ```bash

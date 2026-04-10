@@ -46,6 +46,8 @@ function init(): void {
     : defaultConfig;
 
   const openrouter_api_key = ask("OpenRouter API key", existing.openrouter_api_key);
+  const nutritionix_app_id = ask("Nutritionix app id (optional)", existing.nutritionix_app_id ?? "");
+  const nutritionix_app_key = ask("Nutritionix app key (optional)", existing.nutritionix_app_key ?? "");
   const imessage_handle = ask("iMessage handle", existing.imessage_handle);
   const timezone = ask("Timezone", existing.timezone);
   const model = ask("Model", existing.model);
@@ -53,6 +55,8 @@ function init(): void {
   const config = {
     ...existing,
     openrouter_api_key,
+    nutritionix_app_id,
+    nutritionix_app_key,
     imessage_handle,
     timezone,
     model,
@@ -190,8 +194,10 @@ async function doctor(): Promise<void> {
   try {
     const config = getConfig();
     const keyState = config.openrouter_api_key ? "set" : "missing";
+    const nutritionixState = config.nutritionix_app_id && config.nutritionix_app_key ? "set" : "missing";
     const handleState = config.imessage_handle ? "set" : "missing";
     console.log(`- openrouter key: ${keyState}`);
+    console.log(`- nutritionix creds: ${nutritionixState}`);
     console.log(`- imessage handle: ${handleState}`);
     console.log(`- timezone: ${config.timezone}`);
     if (keyState === "set" && handleState === "set") {

@@ -43,6 +43,7 @@ export async function runChatAgent(
     activeTools: [
       "get_context",
       "calendar_get_upcoming",
+      "lookup_food",
       "log_meal",
       "log_workout",
       "set_goal",
