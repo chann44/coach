@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach - a life coach that lives in your iMessages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0a08;
+  --ink: #f4efe6;
+  --ink-dim: #b8b0a1;
+  --ink-faint: #6b6457;
+  --accent: #e8743c;
+  --accent-soft: #f4a87a;
+  --rule: rgba(244, 239, 230, 0.08);
+  --imsg-bg: #000000;
+  --imsg-gray: #26252a;
+  --imsg-blue-top: #2c8bff;
+  --imsg-blue-bot: #0a66ff;
+  --imsg-time: #8a8a8e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter Tight', -apple-system, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 10%, rgba(232, 116, 60, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(232, 116, 60, 0.04), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+.wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 36px 0 0;
+}
+
+.logo {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.logo .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  transform: translateY(-2px);
+}
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+}
+
+.nav-links a {
+  color: inherit;
+  text-decoration: none;
+  transition: color .2s;
+}
+
+.nav-links a:hover { color: var(--ink); }
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 0 80px;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.phone-side {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 120px;
+}
+
+.phone {
+  position: relative;
+  width: 380px;
+  height: 780px;
+  background: linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 40%, #2c2c2e 100%);
+  border-radius: 58px;
+  padding: 11px;
+  box-shadow:
+    0 0 0 2px #48474b,
+    0 0 0 3px #0a0a0a,
+    0 60px 120px -20px rgba(0, 0, 0, 0.85),
+    0 40px 80px -30px rgba(232, 116, 60, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.phone .btn {
+  position: absolute;
+  background: linear-gradient(90deg, #1a1a1c, #3a3a3c, #1a1a1c);
+  border-radius: 2px;
+}
+
+.phone .btn.mute { left: -2px; top: 110px; width: 3px; height: 28px; }
+.phone .btn.vol-up { left: -2px; top: 160px; width: 3px; height: 48px; }
+.phone .btn.vol-down { left: -2px; top: 220px; width: 3px; height: 48px; }
+.phone .btn.power { right: -2px; top: 180px; width: 3px; height: 80px; }
+
+.screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--imsg-bg);
+  border-radius: 47px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  isolation: isolate;
+}
+
+.island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 20;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 32px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  height: 54px;
+  position: relative;
+  z-index: 10;
+  font-family: -apple-system, 'SF Pro Display', sans-serif;
+  flex-shrink: 0;
+}
+
+.status-bar .right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.status-bar svg { width: 15px; height: 11px; fill: #fff; }
+
+.status-bar .battery {
+  width: 26px;
+  height: 12px;
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 3px;
+  position: relative;
+  padding: 1px;
+}
+
+.status-bar .battery::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: 3px;
+  width: 2px;
+  height: 4px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 0 1px 1px 0;
+}
+
+.status-bar .battery-fill {
+  width: 80%;
+  height: 100%;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.msg-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 14px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.1);
+  background: rgba(22, 22, 24, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.msg-header .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #c4481a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 8px rgba(232, 116, 60, 0.3);
+}
+
+.msg-header .name {
+  font-size: 11px;
+  color: #fff;
+  font-weight: 400;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.msg-header .chev { color: rgba(255,255,255,0.4); font-size: 10px; }
+
+.msg-header .back {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  color: var(--imsg-blue-top);
+  font-size: 22px;
+  font-weight: 300;
+}
+
+.msg-header .video {
+  position: absolute;
+  right: 20px;
+  top: 14px;
+  color: var(--imsg-blue-top);
+  font-size: 18px;
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.35;
+  scroll-behavior: auto;
+  text-align: left;
+  scroll-padding-top: 10px;
+  scroll-padding-bottom: 84px;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.thread-end {
+  height: 84px;
+  flex: 0 0 84px;
+  pointer-events: none;
+}
+
+.messages::-webkit-scrollbar { width: 0; }
+
+.bubble {
+  max-width: 76%;
+  padding: 8px 13px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  position: relative;
+  opacity: 0;
+  transform: scale(0.98);
+  transform-origin: 100% 100%;
+  transition: opacity .2s ease-out, transform .2s ease-out;
+}
+
+.bubble.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bubble.bot {
+  transform-origin: 0% 100%;
+}
+
+.bubble.bot {
+  background: var(--imsg-gray);
+  color: #fff;
+  align-self: flex-start;
+  border-bottom-left-radius: 5px;
+}
+
+.bubble.bot.grouped { border-bottom-left-radius: 18px; }
+
+.bubble.me {
+  background: linear-gradient(180deg, var(--imsg-blue-top), var(--imsg-blue-bot));
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 5px;
+}
+
+.bubble.me.grouped { border-bottom-right-radius: 18px; }
+
+.bubble.first-of-group { margin-top: 6px; }
+
+.bubble.image {
+  padding: 0;
+  width: min(74%, 270px);
+  max-width: 74%;
+  height: clamp(210px, 34vh, 300px);
+  min-height: 210px;
+  background: var(--imsg-gray);
+  overflow: hidden;
+  line-height: 0;
+  flex: 0 0 auto;
+}
+
+.bubble.image.me {
+  background: linear-gradient(180deg, var(--imsg-blue-top), var(--imsg-blue-bot));
+}
+
+.bubble.image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 18px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.bubble.image .caption {
+  padding: 6px 10px 8px;
+  font-size: 13px;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.reaction {
+  position: absolute;
+  top: -14px;
+  width: 30px;
+  height: 30px;
+  background: var(--imsg-gray);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1.5px solid #000;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity .3s, transform .4s cubic-bezier(0.2, 1.2, 0.4, 1.4);
+}
+
+.reaction.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.reaction::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  width: 7px;
+  height: 7px;
+  background: var(--imsg-gray);
+  border-radius: 50%;
+  border: 1.5px solid #000;
+}
+
+.bubble.bot .reaction { right: -10px; }
+.bubble.bot .reaction::after { right: 3px; }
+.bubble.me .reaction { left: -10px; }
+.bubble.me .reaction::after { left: 3px; }
+
+.time-stamp {
+  text-align: center;
+  font-size: 10px;
+  color: var(--imsg-time);
+  margin: 12px 0 4px;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity .4s;
+}
+
+.time-stamp.visible { opacity: 1; }
+.time-stamp b { color: #d1d1d6; font-weight: 600; }
+
+.typing {
+  align-self: flex-start;
+  background: var(--imsg-gray);
+  padding: 11px 14px;
+  border-radius: 18px;
+  border-bottom-left-radius: 5px;
+  gap: 4px;
+  margin-top: 4px;
+  width: fit-content;
+  display: flex;
+}
+
+.typing span {
+  width: 7px;
+  height: 7px;
+  background: #8a8a8e;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 22px;
+  border-top: 0.5px solid rgba(255,255,255,0.1);
+  background: rgba(22, 22, 24, 0.92);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  z-index: 6;
+}
+
+.input-bar .plus {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #1c1c1e;
+  color: #8a8a8e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+.input-field {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #3a3a3c;
+  border-radius: 18px;
+  padding: 6px 32px 6px 12px;
+  color: #8a8a8e;
+  font-size: 14px;
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.input-field::after {
+  content: '^';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  background: #3a3a3c;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: #fff;
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+.replay {
+  position: absolute;
+  bottom: -64px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: 10px 20px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.replay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.replay:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy {
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(44px, 5.8vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  margin-bottom: 28px;
+}
+
+h1 em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent-soft);
+}
+
+h1 .thin {
+  font-weight: 200;
+  color: var(--ink-dim);
+}
+
+.lede {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  max-width: 580px;
+  margin-bottom: 44px;
+  font-weight: 300;
+}
+
+.cta-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 64px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #1a0e06;
+  padding: 16px 28px;
+  border-radius: 100px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  transition: transform .2s, box-shadow .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 40px -8px rgba(232, 116, 60, 0.5);
+}
+
+.btn-primary svg { width: 14px; height: 14px; }
+
+.btn-primary .star-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #1a0e06;
+}
+
+.btn-ghost {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 16px 8px;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color .2s;
+}
+
+.btn-ghost:hover { border-bottom-color: var(--accent); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+  width: 100%;
+  max-width: 620px;
+}
+
+.stat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.stat-num em { color: var(--accent); font-style: normal; }
+
+.stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+footer {
+  padding: 48px 0 40px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+footer .made em { color: var(--accent); font-style: normal; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 24px; }
+  .nav-links { display: none; }
+  .phone { transform: scale(0.82); }
+  .phone-side { margin-bottom: 60px; }
+  .stats { grid-template-columns: 1fr; gap: 24px; text-align: center; }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<nav>
+  <div class="logo">
+    <span class="dot"></span>
+    Coach
+  </div>
+  <div class="nav-links">
+    <a href="./how-it-works.html">How it works</a>
+    <a href="./integration.html">Integrations</a>
+    <a href="./privacy.html">Privacy</a>
+    <a href="./changelog.html">Changelog</a>
+  </div>
+</nav>
+
+<section class="hero">
+
+  <div class="phone-side">
+    <div class="phone">
+      <div class="btn mute"></div>
+      <div class="btn vol-up"></div>
+      <div class="btn vol-down"></div>
+      <div class="btn power"></div>
+
+      <div class="screen">
+        <div class="island"></div>
+
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg viewBox="0 0 17 11"><path d="M1 7h2v4H1zM5 5h2v6H5zM9 3h2v8H9zM13 1h2v10h-2z"/></svg>
+            <svg viewBox="0 0 15 11"><path d="M7.5 2a7 7 0 015 2L11 5.5a5 5 0 00-7 0L2.5 4a7 7 0 015-2zm0 3a4 4 0 012.8 1.2l-1.4 1.4a2 2 0 00-2.8 0L4.7 6.2A4 4 0 017.5 5zm0 3a1.5 1.5 0 11-1 2.5A1.5 1.5 0 017.5 8z"/></svg>
+            <span class="battery"><span class="battery-fill"></span></span>
+          </span>
+        </div>
+
+        <div class="msg-header">
+          <span class="back">&lt;</span>
+          <span class="video">&#9719;</span>
+          <div class="avatar">C</div>
+          <div class="name">Coach <span class="chev">&gt;</span></div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-bar">
+          <div class="plus">+</div>
+          <div class="input-field">iMessage</div>
+        </div>
+
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+    <button class="replay" id="replay">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg>
+      Replay
+    </button>
+  </div>
+
+  <div class="copy">
+    <div class="eyebrow">Personal agent - Local-first - iMessage-native</div>
+    <h1>
+      A life coach <em>that lives</em> <br>
+      <span class="thin">in your iMessages.</span>
+    </h1>
+    <p class="lede">
+      Coach reads your calendar, your sleep, your inbox, your workouts - and texts you like a chief of staff who actually knows your life. No app to open. No dashboard. Just the blue bubbles you already check a hundred times a day.
+    </p>
+    <div class="cta-row">
+      <a href="https://github.com/chann44/coach" target="_blank" rel="noreferrer" class="btn-primary">
+        Star on GitHub
+        <span class="star-badge">&#9733; 0</span>
+      </a>
+      <a href="./how-it-works.html" class="btn-ghost">See how it works -&gt;</a>
+    </div>
+    <div class="stats">
+      <div>
+        <div class="stat-num"><em>15</em></div>
+        <div class="stat-label">Native<br>integrations</div>
+      </div>
+      <div>
+        <div class="stat-num"><em>0</em></div>
+        <div class="stat-label">Cloud<br>servers</div>
+      </div>
+      <div>
+        <div class="stat-num"><em>100%</em></div>
+        <div class="stat-label">Runs on<br>your Mac</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  <div class="made">Built for your life, not the cloud - <em>v0.1</em></div>
+  <div>Bengaluru - 2026</div>
+</footer>
+
+</div>
+
+<script>
+const script = [
+  { type: 'time', text: '<b>Today</b> 6:45 AM' },
+
+  { type: 'bot', text: "Morning. You slept 6h 12m - light on deep sleep again. HRV 38, down from your 44 baseline. Whoop recovery: 51% yellow.", typing: 1000, delay: 400 },
+  { type: 'bot', text: "Honest call: skip the 6:30 gym. Do a 20-min walk + stretching instead. Train heavy tomorrow when you're recovered.", typing: 1100, delay: 500 },
+  { type: 'bot', text: "Also - Mom's BP medicine. You marked it 'twice daily' last week. Morning dose is due now. Don't forget before you head out.", typing: 1200, delay: 600 },
+
+  { type: 'me', text: 'giving it to her now thanks', typing: 700, delay: 1000, react: String.fromCodePoint(0x2764, 0xFE0F) },
+
+  { type: 'bot', text: "Good. I'll remind you again at 8pm for the evening dose.", typing: 800, delay: 500 },
+
+  { type: 'time', text: '<b>Today</b> 9:20 AM' },
+
+  { type: 'bot', text: "Standup in 10. Yesterday you committed to finishing the auth refactor and reviewing Rhea's PR. Auth is still open, PR is untouched. Heads up so you're not caught off guard.", typing: 1300, delay: 500 },
+  { type: 'bot', text: "Also: your 11am with the design team moved to 11:30. You now have a 40-min clear block at 10:50 - want me to protect it for the auth work?", typing: 1200, delay: 500 },
+
+  { type: 'me', text: 'yes block it', typing: 600, delay: 900 },
+
+  { type: 'bot', text: "Blocked. 'Deep work - auth' on your calendar, notifications off on Slack.", typing: 900, delay: 500, react: String.fromCodePoint(0x1F44D) },
+
+  { type: 'time', text: '<b>Today</b> 1:14 PM' },
+
+  {
+    type: 'me',
+    image: './dessert.jpg',
+    alt: 'grain bowl with chicken, rice, greens and egg',
+    typing: 900,
+    delay: 800
+  },
+  { type: 'me', text: 'lunch. how bad', typing: 500, delay: 400 },
+
+  { type: 'bot', text: "Not bad at all. That's grilled chicken (~140g), brown rice, greens, half an avocado, and a soft-boiled egg.", typing: 1300, delay: 700 },
+  { type: 'bot', text: "Estimate: ~620 kcal, 48g protein, 52g carbs, 24g fat. You're at 74g protein for the day - on pace for 150. Keep the dinner protein-forward.", typing: 1400, delay: 500, react: String.fromCodePoint(0x1F44D) },
+
+  { type: 'me', text: 'what about dessert lol', typing: 700, delay: 900 },
+
+  { type: 'bot', text: "You've got room. ~800 kcal budget left. If you want something, do it now not at night - your sleep is already fragile this week.", typing: 1200, delay: 500 },
+
+  { type: 'time', text: '<b>Today</b> 4:48 PM' },
+
+  {
+    type: 'me',
+    image: './lunch.jpg',
+    alt: 'chocolate dessert cup',
+    typing: 900,
+    delay: 700
+  },
+  { type: 'me', text: 'ok logged', typing: 500, delay: 400 },
+
+  { type: 'bot', text: "Chocolate mousse cup - roughly 280 kcal, 18g sugar. Logged. You're now at 1,840 kcal / 2,400 target. Fine.", typing: 1300, delay: 600 },
+  { type: 'bot', text: "One small thing: that's your second sugar hit today (coffee this morning had syrup). Worth noticing, not worth stressing.", typing: 1300, delay: 500 },
+
+  { type: 'time', text: '<b>Today</b> 7:58 PM' },
+
+  { type: 'bot', text: "Mom's evening BP dose. Same time as this morning - 8pm. Please don't skip.", typing: 1000, delay: 500 },
+
+  { type: 'me', text: 'done', typing: 500, delay: 1100, react: String.fromCodePoint(0x2764, 0xFE0F) },
+
+  { type: 'bot', text: "Thank you. That's both doses logged for today.", typing: 900, delay: 500 },
+  { type: 'bot', text: "One more thing - Dad's cardiologist appointment is Friday 11am. You haven't added it to your calendar yet. Want me to block the morning so you can take him?", typing: 1300, delay: 700 },
+
+  { type: 'me', text: "yes and remind me thursday 9pm his reports", typing: 900, delay: 900 },
+
+  { type: 'bot', text: "Done. Blocked Friday 10-1pm, reminder set for Thursday 9pm to pull Dad's recent reports and the BP log.", typing: 1300, delay: 500, react: String.fromCodePoint(0x2764, 0xFE0F) },
+
+  { type: 'time', text: '<b>Today</b> 10:22 PM' },
+
+  { type: 'bot', text: "Wind-down time. You hit 142g protein, 9,200 steps, both of Mom's doses, and closed the auth refactor. Real day.", typing: 1200, delay: 500 },
+  { type: 'bot', text: "Lights going to 10% in 5 min. Sleep target 11pm - you need the recovery. I'll check on you at 6:40.", typing: 1300, delay: 500 },
+
+  { type: 'me', text: 'thanks coach', typing: 500, delay: 900, react: String.fromCodePoint(0x2764, 0xFE0F) }
+];
+
+const messagesEl = document.getElementById('messages');
+const replayBtn = document.getElementById('replay');
+const endAnchor = document.createElement('div');
+endAnchor.className = 'thread-end';
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const NEAR_BOTTOM_PX = 48;
+let stickToBottom = true;
+
+const isNearBottom = () => {
+  const remaining = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight;
+  return remaining <= NEAR_BOTTOM_PX;
+};
+
+const scrollDown = (force = false) => {
+  if (!force && !stickToBottom) return;
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  requestAnimationFrame(() => {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  });
+};
+
+messagesEl.addEventListener('scroll', () => {
+  stickToBottom = isNearBottom();
+}, { passive: true });
+
+function makeTyping() {
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  return t;
+}
+
+async function playConversation() {
+  messagesEl.innerHTML = '';
+  messagesEl.appendChild(endAnchor);
+  replayBtn.classList.remove('visible');
+  stickToBottom = true;
+  scrollDown(true);
+
+  let prevSide = null;
+
+  for (let i = 0; i < script.length; i++) {
+    const item = script[i];
+
+    if (item.type === 'time') {
+      const div = document.createElement('div');
+      div.className = 'time-stamp';
+      div.innerHTML = item.text;
+      messagesEl.insertBefore(div, endAnchor);
+      scrollDown(true);
+      await sleep(50);
+      div.classList.add('visible');
+      await sleep(500);
+      prevSide = null;
+      continue;
+    }
+
+    if (item.delay) await sleep(item.delay);
+
+    let typingEl = null;
+    if (item.typing && item.type === 'bot') {
+      typingEl = makeTyping();
+      messagesEl.insertBefore(typingEl, endAnchor);
+      scrollDown();
+      await sleep(item.typing);
+      typingEl.remove();
+    } else if (item.typing) {
+      await sleep(item.typing);
+    }
+
+    const bubble = document.createElement('div');
+    const side = item.from || item.type;
+    bubble.className = `bubble ${side}`;
+    if (item.image) bubble.classList.add('image');
+
+    if (prevSide === side) {
+      bubble.classList.add('grouped');
+    } else {
+      bubble.classList.add('first-of-group');
+    }
+    if (item.image) {
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.alt || '';
+      img.width = 1024;
+      img.height = 1280;
+      img.loading = 'eager';
+      img.decoding = 'async';
+      img.addEventListener('load', () => scrollDown(true), { once: true });
+      img.addEventListener('error', () => scrollDown(true), { once: true });
+      bubble.appendChild(img);
+
+      if (item.text) {
+        const caption = document.createElement('div');
+        caption.className = 'caption';
+        caption.textContent = item.text;
+        bubble.appendChild(caption);
+      }
+    } else {
+      bubble.textContent = item.text;
+    }
+
+    let reactionEl = null;
+    if (item.react) {
+      reactionEl = document.createElement('div');
+      reactionEl.className = 'reaction';
+      reactionEl.textContent = item.react;
+      bubble.appendChild(reactionEl);
+    }
+
+    messagesEl.insertBefore(bubble, endAnchor);
+    scrollDown();
+
+    await sleep(20);
+    bubble.classList.add('visible');
+
+    if (reactionEl) {
+      await sleep(700);
+      reactionEl.classList.add('visible');
+      scrollDown();
+    }
+
+    prevSide = side;
+    scrollDown();
+  }
+
+  await sleep(1200);
+  replayBtn.classList.add('visible');
+}
+
+replayBtn.addEventListener('click', playConversation);
+
+window.addEventListener('load', () => {
+  setTimeout(playConversation, 600);
+});
+</script>
+
+</body>
+</html>

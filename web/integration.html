@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach - Integrations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0a08;
+  --ink: #f4efe6;
+  --ink-dim: #b8b0a1;
+  --ink-faint: #6b6457;
+  --accent: #e8743c;
+  --accent-soft: #f4a87a;
+  --rule: rgba(244, 239, 230, 0.1);
+  --panel: rgba(19, 17, 14, 0.82);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter Tight', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 8%, rgba(232, 116, 60, 0.11), transparent 62%),
+    radial-gradient(ellipse 60% 40% at 20% 88%, rgba(232, 116, 60, 0.05), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px 70px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 36px 0 0;
+}
+
+.logo {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.logo .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  transform: translateY(-2px);
+}
+
+.back {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 10px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 100px;
+  text-decoration: none;
+  transition: all .2s;
+}
+
+.back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hero {
+  text-align: center;
+  padding: 44px 0 38px;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(38px, 5.2vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+
+h1 em {
+  color: var(--accent-soft);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.lede {
+  max-width: 740px;
+  margin: 0 auto;
+  color: var(--ink-dim);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.bucket {
+  margin-top: 24px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.catalog {
+  margin-top: 24px;
+}
+
+.bucket-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 12px;
+}
+
+.bucket h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  color: var(--ink-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cards {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 140px;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.name {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.desc {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.never {
+  border-color: rgba(232, 116, 60, 0.35);
+}
+
+.never .id {
+  color: #ff9c70;
+}
+
+.totals {
+  margin-top: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+@media (max-width: 1020px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .wrap { padding: 0 22px 56px; }
+  .bucket-head { flex-direction: column; align-items: flex-start; }
+  .cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a href="./index.html" class="logo"><span class="dot"></span>Coach</a>
+    <a href="./index.html" class="back">Back to Home</a>
+  </nav>
+
+  <section class="hero">
+    <div class="eyebrow">Built around your real life stack</div>
+    <h1>Coach plugs into <em>the tools you already use</em></h1>
+    <p class="lede">From iMessage and calendar to health, work, and home systems - these integrations let Coach act like a real chief of staff, not just a chatbot.</p>
+  </section>
+
+  <section class="catalog">
+    <div class="bucket-head">
+      <h2>Integration Catalog</h2>
+      <div class="meta">40 connectors across health, work, relationships, home, finance</div>
+    </div>
+    <ul class="cards">
+      <li class="card"><div class="id">#1</div><div class="name">Apple Calendar</div><div class="desc">Read events and plan around meetings and training slots via AppleScript.</div></li>
+      <li class="card"><div class="id">#2</div><div class="name">Apple Contacts + iMessage history</div><div class="desc">Relationship tracking and people-slipping detection using AppleScript plus Photon DB access.</div></li>
+      <li class="card"><div class="id">#3</div><div class="name">Open-Meteo</div><div class="desc">Weather and forecast. Free and no API key.</div></li>
+      <li class="card"><div class="id">#4</div><div class="name">OpenAQ</div><div class="desc">Air quality index with strong India coverage. Free and no key.</div></li>
+      <li class="card"><div class="id">#5</div><div class="name">Nutritionix + Open Food Facts</div><div class="desc">Reliable macros for restaurants/brands and packaged foods.</div></li>
+      <li class="card"><div class="id">#6</div><div class="name">Tavily</div><div class="desc">Web search fallback when the assistant needs fresh context.</div></li>
+      <li class="card"><div class="id">#7</div><div class="name">Whisper via OpenRouter</div><div class="desc">Voice memo transcription to log meals and workouts quickly.</div></li>
+      <li class="card"><div class="id">#8</div><div class="name">Apple Mail</div><div class="desc">Summarize email threads and draft replies with AppleScript.</div></li>
+      <li class="card"><div class="id">#9</div><div class="name">Apple Reminders</div><div class="desc">Read and write tasks with due dates.</div></li>
+      <li class="card"><div class="id">#10</div><div class="name">Apple Notes</div><div class="desc">Search and create notes through AppleScript.</div></li>
+      <li class="card"><div class="id">#11</div><div class="name">Apple Music</div><div class="desc">Workout playlists and now playing control.</div></li>
+      <li class="card"><div class="id">#12</div><div class="name">GitHub</div><div class="desc">PRs, issues, and notifications with personal access token auth.</div></li>
+      <li class="card"><div class="id">#13</div><div class="name">Google Maps Distance Matrix</div><div class="desc">Commute duration and traffic-aware planning.</div></li>
+      <li class="card"><div class="id">#14</div><div class="name">Apple Health bridge</div><div class="desc">Sleep, HRV, steps, and RHR via iOS Shortcut push into Coach.</div></li>
+      <li class="card"><div class="id">#15</div><div class="name">Home Assistant</div><div class="desc">Smart home controls through local URL + token.</div></li>
+      <li class="card"><div class="id">#16</div><div class="name">Gmail</div><div class="desc">Mail support for non-Apple users.</div></li>
+      <li class="card"><div class="id">#17</div><div class="name">Google Calendar</div><div class="desc">Calendar support for non-Apple workflows.</div></li>
+      <li class="card"><div class="id">#18</div><div class="name">Notion</div><div class="desc">Read and write pages/databases for personal planning.</div></li>
+      <li class="card"><div class="id">#19</div><div class="name">Slack</div><div class="desc">DMs, mentions, and unread context summarization.</div></li>
+      <li class="card"><div class="id">#20</div><div class="name">Linear</div><div class="desc">Tickets, project states, and blockers.</div></li>
+      <li class="card"><div class="id">#21</div><div class="name">Strava</div><div class="desc">Runs, rides, and training trends.</div></li>
+      <li class="card"><div class="id">#22</div><div class="name">Oura</div><div class="desc">Sleep score, readiness, and recovery signals.</div></li>
+      <li class="card"><div class="id">#23</div><div class="name">Spotify</div><div class="desc">Now playing, playlists, and recommendation context.</div></li>
+      <li class="card"><div class="id">#24</div><div class="name">CoinGecko</div><div class="desc">Crypto prices.</div></li>
+      <li class="card"><div class="id">#25</div><div class="name">Alpha Vantage / Finnhub</div><div class="desc">Stock prices.</div></li>
+      <li class="card"><div class="id">#26</div><div class="name">Open Exchange Rates</div><div class="desc">Currency conversion.</div></li>
+      <li class="card"><div class="id">#27</div><div class="name">Kiwi Tequila</div><div class="desc">Flight search.</div></li>
+      <li class="card"><div class="id">#28</div><div class="name">AviationStack</div><div class="desc">Flight status.</div></li>
+      <li class="card"><div class="id">#29</div><div class="name">Wikipedia</div><div class="desc">Factual lookups.</div></li>
+      <li class="card"><div class="id">#30</div><div class="name">HackerNews (Algolia)</div><div class="desc">Tech news feed context.</div></li>
+      <li class="card"><div class="id">#31</div><div class="name">Reddit JSON</div><div class="desc">Subreddit reads.</div></li>
+      <li class="card"><div class="id">#32</div><div class="name">arXiv</div><div class="desc">Academic paper search.</div></li>
+      <li class="card"><div class="id">#33</div><div class="name">Wger.de</div><div class="desc">Exercise database.</div></li>
+      <li class="card"><div class="id">#34</div><div class="name">Obsidian</div><div class="desc">Read local vault files directly.</div></li>
+      <li class="card"><div class="id">#35</div><div class="name">Things 3</div><div class="desc">Task management via URL scheme.</div></li>
+      <li class="card"><div class="id">#36</div><div class="name">Readwise</div><div class="desc">Highlights and articles via API key.</div></li>
+      <li class="card"><div class="id">#37</div><div class="name">Splitwise</div><div class="desc">Shared expense context.</div></li>
+      <li class="card"><div class="id">#38</div><div class="name">Lunch Money</div><div class="desc">Budgeting and spending insights.</div></li>
+      <li class="card"><div class="id">#39</div><div class="name">Vercel / Railway / Fly</div><div class="desc">Deployment status and incidents.</div></li>
+      <li class="card"><div class="id">#40</div><div class="name">Sentry</div><div class="desc">Runtime errors and issue trends.</div></li>
+    </ul>
+  </section>
+
+  <section class="bucket never">
+    <div class="bucket-head">
+      <h2>Not Planned Right Now</h2>
+      <div class="meta">Blocked or hostile surfaces</div>
+    </div>
+    <ul class="cards">
+      <li class="card"><div class="id">No-go</div><div class="name">WhatsApp / Instagram / LinkedIn</div><div class="desc">No practical user-level API path or high ban risk.</div></li>
+      <li class="card"><div class="id">No-go</div><div class="name">X/Twitter</div><div class="desc">Pricing floor is too high for this phase.</div></li>
+      <li class="card"><div class="id">No-go</div><div class="name">Uber/Ola + Swiggy/Zomato/Blinkit/Zepto</div><div class="desc">No stable public user APIs.</div></li>
+      <li class="card"><div class="id">No-go</div><div class="name">Netflix/Prime/Disney+ + Amazon/Flipkart</div><div class="desc">No direct user API access and scraping risk.</div></li>
+      <li class="card"><div class="id">No-go</div><div class="name">Indian banks + Apple Health on Mac</div><div class="desc">No individual APIs, and Health requires iOS bridge.</div></li>
+      <li class="card"><div class="id">No-go</div><div class="name">MyFitnessPal / Discord self-bots / Strong / Goodreads</div><div class="desc">No public API or policy/account risk.</div></li>
+    </ul>
+  </section>
+
+  <p class="totals">7 hackathon - 15 month 1 - 23 year 1 - 40 long term</p>
+</div>
+</body>
+</html>

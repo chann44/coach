@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach - Changelog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=JetBrains+Mono:wght@400;500&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0a08;
+  --ink: #f4efe6;
+  --ink-dim: #b8b0a1;
+  --ink-faint: #6b6457;
+  --accent: #e8743c;
+  --rule: rgba(244, 239, 230, 0.1);
+  --card: rgba(19, 17, 14, 0.85);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter Tight', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 26px 64px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 34px;
+}
+
+.logo {
+  text-decoration: none;
+  color: var(--ink);
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+}
+
+.back {
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero {
+  text-align: center;
+  padding: 44px 0 28px;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(36px, 5vw, 62px);
+  letter-spacing: -0.03em;
+  line-height: 1.03;
+  margin-bottom: 10px;
+}
+
+.lede {
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--ink-dim);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.day {
+  margin-top: 18px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 18px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.head h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  color: var(--ink-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.desc {
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.note {
+  margin-top: 12px;
+  color: var(--ink-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 760px) {
+  .grid { grid-template-columns: 1fr; }
+  .head { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <a class="logo" href="./index.html">Coach</a>
+      <a class="back" href="./index.html">Back to Home</a>
+    </nav>
+
+    <section class="hero">
+      <div class="eyebrow">What shipped</div>
+      <h1>Changelog</h1>
+      <p class="lede">Fast snapshot of product and tooling progress. Updated with today’s shipped work and in-progress web rollout.</p>
+    </section>
+
+    <section class="day">
+      <div class="head">
+        <h2>April 10, 2026</h2>
+        <div class="meta">Current focus: web experience + integrations</div>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="tag">Core</div>
+          <div class="title">AI agent base + reliability pass</div>
+          <div class="desc">Set up the agent baseline and improved prompt/reply guards so scheduling events do not interrupt active messaging.</div>
+        </article>
+
+        <article class="card">
+          <div class="tag">Tools</div>
+          <div class="title">Food + barcode + Apple Health tools</div>
+          <div class="desc">Added `food_lookup`, barcode image support, and Apple Health tool integration for stronger daily context.</div>
+        </article>
+
+        <article class="card">
+          <div class="tag">Web</div>
+          <div class="title">Landing page and iMessage simulation</div>
+          <div class="desc">Built the homepage experience with animated conversation playback and improved chat spacing/scroll handling.</div>
+        </article>
+
+        <article class="card">
+          <div class="tag">Web</div>
+          <div class="title">New product pages</div>
+          <div class="desc">Shipped dedicated Integrations, Privacy, How It Works, and Changelog pages with consistent visual language.</div>
+        </article>
+
+        <article class="card">
+          <div class="tag">Media</div>
+          <div class="title">Local message assets</div>
+          <div class="desc">Added local food images for chat bubbles (`lunch.jpg`, `dessert.jpg`) and wired them into the conversation script.</div>
+        </article>
+
+        <article class="card">
+          <div class="tag">Navigation</div>
+          <div class="title">Cross-page linking</div>
+          <div class="desc">Updated homepage navigation so How It Works, Integrations, Privacy, and Changelog are all reachable as standalone pages.</div>
+        </article>
+      </div>
+
+      <p class="note">Git commits today: agent setup, prompt guard fix, food lookup tool, barcode tool, Apple Health tool.</p>
+    </section>
+  </div>
+</body>
+</html>
